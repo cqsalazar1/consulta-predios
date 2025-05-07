@@ -1,0 +1,9 @@
+folium
+geopandas
+leafmap==0.43.4
+openpyxl
+pandas
+sqlite3
+shapely
+streamlit
+streamlit_folium==0.24.0
