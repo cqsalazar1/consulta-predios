@@ -3,7 +3,7 @@ geopandas
 leafmap==0.43.4
 openpyxl
 pandas
-sqlite3
+sqlite==3.49.1
 shapely
 streamlit
 streamlit_folium==0.24.0
