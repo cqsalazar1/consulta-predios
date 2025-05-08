@@ -64,7 +64,7 @@ def load_data_intersect(latitud, longitud):
         df['wkt'] = df['wkt'].apply(wkt.loads)
         gdf = gpd.GeoDataFrame(df, geometry='wkt', crs='4326')
         return gdf
-        
+    
     except psycopg2.Error as e:
         print(f"Error al conectar o consultar la base de datos: {e}")
 
