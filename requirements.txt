@@ -3,8 +3,7 @@ geopandas
 leafmap==0.43.4
 openpyxl
 pandas
-psycopg2
-import psycopg2==2.9.10
+psycopg2==2.9.10
 shapely
 streamlit
 streamlit_folium==0.24.0
