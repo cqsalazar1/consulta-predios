@@ -63,6 +63,7 @@ def load_data_intersect(latitud, longitud):
         df = pd.DataFrame(cursor.fetchall(), columns=columnas)
         df['wkt'] = df['wkt'].apply(wkt.loads)
         gdf = gpd.GeoDataFrame(df, geometry='wkt', crs='4326')
+        gdf = gdf.drop(columns=['ETIQUETA', 'IDTERRENO', 'OBS', 'LAST_EDITE', 'TIPO_AVALU', 'MODIFICACI', 'EDITOR', 'Shape_Leng', 'geometry'])
         return gdf
     
     except psycopg2.Error as e:
