@@ -8,3 +8,4 @@ psycopg2-binary
 shapely
 streamlit
 streamlit_folium==0.24.0
+streamlit_authenticator
