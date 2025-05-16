@@ -1,0 +1,51 @@
+cookie:
+  expiry_days: 0
+  key: streamlit-auth-test-app-key
+  name: streamlit-auth-test-app
+credentials:
+  usernames:
+    hector:
+      email: hectormucas78@gmail.com
+      failed_login_attempts: 0
+      first_name: Hector
+      last_name: Murillo
+      logged_in: false
+      password: $2b$12$HCPXS85G3fvlEwNgfzeSCuIVyQBcEK..pEdl8d1h75Mjde2l9I/Ky
+      roles:
+      - admin
+      - editor
+      - viewer
+    nelson:
+      email: nelsoncaicedo10@gmail.com
+      failed_login_attempts: 0
+      first_name: Nelson
+      last_name: Caicedo
+      logged_in: false
+      password: $2b$12$1DTci3qDtmi1ItynT7GSqOaz1CbhmXy6Vr42tHU1ZzN4EEDIwrMD2
+      roles:
+      - admin
+      - editor
+      - viewer
+    luis:
+      email: luhevamaja@hotmail.com
+      failed_login_attempts: 0
+      first_name: Luis
+      last_name: Vasquez
+      logged_in: false
+      password: $2b$12$R5g/JclwVfzn0goxlXKLZetN1SWdCoOuLxRlalgwq7FnU1Pz2Z4T2
+      roles:
+      - admin
+      - editor
+      - viewer
+    cristian:
+      email: cristianq015@gmail.com
+      failed_login_attempts: 0
+      first_name: Cristian
+      last_name: Quintero
+      logged_in: false
+      password: $2b$12$KxV8LKIs7Fu3UXiyG3g94OqnBOp5k42/7PtNp255NdUvOI9i.rGaa
+      roles:
+      - admin
+      - editor
+      - viewer
+
