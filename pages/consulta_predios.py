@@ -100,7 +100,7 @@ st.set_page_config(page_title='Consulta de Predios', layout='centered', page_ico
 if st.sidebar.button('Salir', type='secondary', use_container_width=True):
     link = "[share](/?param=value)"
     st.markdown("""
-        <meta http-equiv="refresh" content="0; url='https://www.google.com'" />
+        <meta http-equiv="refresh" content="0; url='https://consulta-predios-6qgpe5ypy7ktgzimemzy5w.streamlit.app/'" />
         """, unsafe_allow_html=True
     )
 
