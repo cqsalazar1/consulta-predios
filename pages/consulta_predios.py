@@ -251,7 +251,10 @@ elif option == 'COORDENADAS':
             m_streamlit = m.to_streamlit(800, 600)
             st.markdown(":gray[**Información Alfanumérica**]")
             df_filtrado = load_table(conexion, option1, int(selected_gdf['IDPREDIO']))
-            st.data_editor(df_filtrado, key="my_key", num_rows="fixed")
+            if len(df_filtrado) == 0:
+                st.markdown(":gray[*No se encontró ningún predio en la base alfanumérica*]")
+            else:
+                st.data_editor(df_filtrado, key="my_key", num_rows="fixed")
             st.sidebar.link_button('Google Maps', f"https://maps.google.com/?q={selected_gdf['LATITUD'].values[0]},{selected_gdf['LONGITUD'].values[0]}", type='tertiary', icon=":material/pin_drop:", use_container_width=True)
         else:
             m_streamlit = m.to_streamlit(800, 600)
