@@ -1,6 +1,7 @@
 pyYAML
 folium
 geopandas
+googlemaps
 leafmap==0.43.4
 openpyxl
 pandas
