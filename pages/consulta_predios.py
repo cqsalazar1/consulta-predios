@@ -150,6 +150,7 @@ st.subheader("Consulta Predial", divider='gray')
 
 
 m = leafmap.Map(
+    tiles='Cartodb Positron',
     google_map='ROADMAP',
     center=[3.4248559, -76.5188715],
     zoom=12,
@@ -165,8 +166,10 @@ m = leafmap.Map(
 m.add_child(MeasureControl(position='bottomleft'))
 m.add_basemap(basemap="HYBRID", show=False)
 
-
 MousePosition().add_to(m)
+m.add_child(
+    folium.LatLngPopup()
+)
 
 conexion = conectar_bd()
 
