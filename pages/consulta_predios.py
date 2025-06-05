@@ -301,11 +301,19 @@ elif option == 'COORDENADAS':
             else:
                 vecinos = load_vecino(conexion, option2, int(selected_gdf['IDPREDIO'][0]))
 
-            m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
-            m.add_gdf(selected_gdf, layer_name='Predio seleccionado', zoom_to_layer=True, style={'color':'red', 'fill':'red', 'weight':2})
-            m_streamlit = m.to_streamlit(800, 600)
-            st.markdown(":gray[**Información Alfanumérica**]")
-            df_filtrado = load_table(conexion, option1, int(selected_gdf['IDPREDIO']))
+            try:
+                m.add_marker(location=[latitud, longitud],
+                popup=f"Latitud: {round(latitud,5)}\n Longitud: {round(longitud,5)}",
+                icon=folium.Icon(color="green", icon='screenshot'))
+                m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
+                m.add_gdf(selected_gdf, layer_name='Predio seleccionado', zoom_to_layer=True, style={'color':'red', 'fill':'red', 'weight':2})
+                m_streamlit = m.to_streamlit(800, 600)
+                st.markdown(":gray[**Información Alfanumérica**]")
+                df_filtrado = load_table(conexion, option1, int(selected_gdf['IDPREDIO']))
+            except NameError as e:
+                st.sidebar.markdown(f":gray[*{e}*]")
+                m_streamlit = m.to_streamlit(800, 600)
+                
             if len(df_filtrado) == 0:
                 st.markdown(":gray[*No se encontró ningún predio en la base alfanumérica*]")
             else:
@@ -314,8 +322,16 @@ elif option == 'COORDENADAS':
         else:
             m_streamlit = m.to_streamlit(800, 600)
     except:
-        m_streamlit = m.to_streamlit(800, 600)
-        st.sidebar.markdown(":gray[*No se encontró ningún predio en las coordenadas aportadas*]")
+        try:
+            m.add_marker(location=[latitud, longitud],
+                popup=f"Latitud: {round(latitud,5)}\n Longitud: {round(longitud,5)}",
+                icon=folium.Icon(color="red", icon='question-sign'))
+            m.set_center(longitud, latitud, zoom=19)
+            st.sidebar.markdown(":gray[*No se encontró ningún predio en las coordenadas aportadas*]")
+            m_streamlit = m.to_streamlit(800, 600)
+        except NameError as e:
+            st.sidebar.markdown(f":gray[*{e}*]")
+            m_streamlit = m.to_streamlit(800, 600)
 
 elif option == 'DIRECCIÓN':
     option1 = 'ID_PREDIO'
