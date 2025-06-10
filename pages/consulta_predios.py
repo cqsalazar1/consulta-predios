@@ -28,13 +28,20 @@ def conectar_bd():
 @st.cache_data
 def load_table(_conexion, option, input):
     cursor = _conexion.cursor() # Crear un cursor para ejecutar consultas
-    consulta = f""" SELECT * FROM "export_MAESTRO_predio_09032025" WHERE "{option}" = '{input}' """
+    consulta = f"""SELECT * FROM "export_MAESTRO_predio_09032025" WHERE "{option}" = '{input}' """
+    cursor.execute(consulta)
+    data = cursor.fetchall()
+    columns = [col[0] for col in cursor.description]  # Obtener nombres de columnas
+    df = pd.DataFrame(data, columns=columns)
 
+    id_terreno = df['ID_TERRENO'].values[0]
+    consulta = f"""SELECT * FROM "export_MAESTRO_predio_09032025" WHERE "ID_TERRENO" = '{id_terreno}' """
     cursor.execute(consulta)
 
     data = cursor.fetchall()
     columns = [col[0] for col in cursor.description]  # Obtener nombres de columnas
     df = pd.DataFrame(data, columns=columns)
+
     gdf = gpd.GeoDataFrame(df)
     gdf = gdf.drop(columns=['index'])
     return gdf
