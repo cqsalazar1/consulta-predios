@@ -34,17 +34,25 @@ def load_table(_conexion, option, input):
     columns = [col[0] for col in cursor.description]  # Obtener nombres de columnas
     df = pd.DataFrame(data, columns=columns)
 
-    id_terreno = df['ID_TERRENO'].values[0]
-    consulta = f"""SELECT * FROM "export_MAESTRO_predio_09032025" WHERE "ID_TERRENO" = '{id_terreno}' """
-    cursor.execute(consulta)
+    try:
+        id_terreno = df['ID_TERRENO'].values[0]
+        consulta = f"""SELECT * FROM "export_MAESTRO_predio_09032025" WHERE "ID_TERRENO" = '{id_terreno}' """
+        cursor.execute(consulta)
+        data = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]  # Obtener nombres de columnas
+        df = pd.DataFrame(data, columns=columns)
+        gdf = gpd.GeoDataFrame(df)
+        gdf = gdf.drop(columns=['index'])
+        return gdf
 
-    data = cursor.fetchall()
-    columns = [col[0] for col in cursor.description]  # Obtener nombres de columnas
-    df = pd.DataFrame(data, columns=columns)
-
-    gdf = gpd.GeoDataFrame(df)
-    gdf = gdf.drop(columns=['index'])
-    return gdf
+    except:
+        cursor.execute(consulta)
+        data = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]  # Obtener nombres de columnas
+        df = pd.DataFrame(data, columns=columns)
+        gdf = gpd.GeoDataFrame(df)
+        gdf = gdf.drop(columns=['index'])
+        return gdf
     
 # Cargue de información cartográfica
 @st.cache_data
