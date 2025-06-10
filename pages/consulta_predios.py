@@ -33,7 +33,7 @@ def load_table(_conexion, option, input):
     data = cursor.fetchall()
     columns = [col[0] for col in cursor.description]  # Obtener nombres de columnas
     df = pd.DataFrame(data, columns=columns)
-
+    
     try:
         id_terreno = df['ID_TERRENO'].values[0]
         consulta = f"""SELECT * FROM "export_MAESTRO_predio_09032025" WHERE "ID_TERRENO" = '{id_terreno}' """
