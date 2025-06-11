@@ -35,16 +35,20 @@ def load_table(_conexion, option, input):
     df = pd.DataFrame(data, columns=columns)
     
     try:
-        id_terreno = df['ID_TERRENO'].values[0]
-        consulta = f"""SELECT * FROM "export_MAESTRO_predio_09032025" WHERE "ID_TERRENO" = '{id_terreno}' """
-        cursor.execute(consulta)
-        data = cursor.fetchall()
-        columns = [col[0] for col in cursor.description]  # Obtener nombres de columnas
-        df = pd.DataFrame(data, columns=columns)
-        gdf = gpd.GeoDataFrame(df)
-        gdf = gdf.drop(columns=['index'])
-        return gdf
-
+        if df['ID_TERRENO'].values[0] is None:
+            gdf = gpd.GeoDataFrame(df)
+            gdf = gdf.drop(columns=['index'])
+            return gdf
+        else:
+            id_terreno = df['ID_TERRENO'].values[0]
+            consulta = f"""SELECT * FROM "export_MAESTRO_predio_09032025" WHERE "ID_TERRENO" = '{id_terreno}' """
+            cursor.execute(consulta)
+            data = cursor.fetchall()
+            columns = [col[0] for col in cursor.description]  # Obtener nombres de columnas
+            df = pd.DataFrame(data, columns=columns)
+            gdf = gpd.GeoDataFrame(df)
+            gdf = gdf.drop(columns=['index'])
+            return gdf
     except:
         cursor.execute(consulta)
         data = cursor.fetchall()
