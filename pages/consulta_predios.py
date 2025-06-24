@@ -206,7 +206,7 @@ conexion = conectar_bd()
 ## CONSULTAS
 option = st.sidebar.selectbox(
     "Seleccione el tipo de consulta",
-    ("ID PREDIO", "ID TERRENO", "NÚMERO PREDIAL", "NPN", "COORDENADAS", "DIRECCIÓN", "NOMBRE PROPIEDAD"),
+    ("ID PREDIO", "ID TERRENO", "NÚMERO PREDIAL", "NPN", "COORDENADAS", "DIRECCIÓN"),
 )
 
 if option == 'ID PREDIO':
