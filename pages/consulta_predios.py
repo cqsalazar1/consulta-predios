@@ -1,5 +1,5 @@
-import psycopg2
 import folium
+import psycopg2
 import googlemaps
 import pandas as pd
 import streamlit as st
@@ -57,6 +57,18 @@ def load_table(_conexion, option, input):
         gdf = gpd.GeoDataFrame(df)
         gdf = gdf.drop(columns=['index'])
         return gdf
+
+# Cargue de información alfanumérica - Solo para NOMBRE PROPIEDAD
+@st.cache_data
+def load_table2(_conexion, option, input):
+    cursor = _conexion.cursor() # Crear un cursor para ejecutar consultas
+    consulta = f"""SELECT * FROM "export_MAESTRO_predio_09032025" WHERE "{option}" ILIKE '%{input}%' """
+    cursor.execute(consulta)
+    data = cursor.fetchall()
+    columns = [col[0] for col in cursor.description]  # Obtener nombres de columnas
+    df = pd.DataFrame(data, columns=columns)
+    df = df.drop(columns=['index'])
+    return df
     
 # Cargue de información cartográfica
 @st.cache_data
@@ -184,6 +196,7 @@ m.add_child(MeasureControl(position='bottomleft'))
 m.add_basemap(basemap="HYBRID", show=False)
 
 MousePosition().add_to(m)
+
 m.add_child(
     folium.LatLngPopup()
 )
@@ -193,7 +206,7 @@ conexion = conectar_bd()
 ## CONSULTAS
 option = st.sidebar.selectbox(
     "Seleccione el tipo de consulta",
-    ("ID PREDIO", "NÚMERO PREDIAL", "NPN", "COORDENADAS", "DIRECCIÓN"),
+    ("ID PREDIO", "ID TERRENO", "NÚMERO PREDIAL", "NPN", "COORDENADAS", "DIRECCIÓN", "NOMBRE PROPIEDAD"),
 )
 
 if option == 'ID PREDIO':
@@ -213,13 +226,16 @@ if option == 'ID PREDIO':
                 else:
                     st.data_editor(select_df, key="my_key", num_rows="fixed")
             else:
-                if selected_gdf['CONEXION'][0] is None:
-                    vecinos = load_vecino(conexion, option1, filtro_id_predio)
-                elif selected_gdf['CONEXION'][0] is not None and int(selected_gdf['COMUNA'][0]) <= 22:
-                    vecinos = load_manzana(conexion, selected_gdf['CONEXION'][0][:-4])
-                else:
-                    vecinos = load_vecino(conexion, option1, filtro_id_predio)
-                m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
+                try:
+                    if selected_gdf['CONEXION'][0] is None:
+                        vecinos = load_vecino(conexion, option1, filtro_id_predio)
+                    elif selected_gdf['CONEXION'][0] is not None and int(selected_gdf['COMUNA'][0]) <= 22:
+                        vecinos = load_manzana(conexion, selected_gdf['CONEXION'][0][:-4])
+                    else:
+                        vecinos = load_vecino(conexion, option1, filtro_id_predio)
+                    m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
+                except:
+                    pass
                 m.add_gdf(selected_gdf, layer_name='Predio seleccionado', zoom_to_layer=True, style={'color':'red', 'fill':'red', 'weight':2})
                 st.sidebar.link_button('Google Maps', f"https://maps.google.com/?q={selected_gdf['LATITUD'].values[0]},{selected_gdf['LONGITUD'].values[0]}", type='tertiary', icon=":material/pin_drop:", use_container_width=True)
                 m_streamlit = m.to_streamlit(800, 600)
@@ -227,6 +243,45 @@ if option == 'ID PREDIO':
                 select_df = load_table(conexion, option2, filtro_id_predio)
                 if len(select_df) == 0:
                     st.markdown(":gray[*El ID PREDIO no se encontró en la base alfanumérica*]")
+                else:
+                    st.data_editor(select_df, key="my_key", num_rows="fixed")
+        else:
+            m_streamlit = m.to_streamlit(800, 600)
+    except:
+        m_streamlit = m.to_streamlit(800, 600)
+
+if option == 'ID TERRENO':
+    option1 = 'CONEXION'
+    option2 = 'ID_TERRENO'
+    try:
+        filtro_id_terreno = st.sidebar.text_input("ID TERRENO:")
+        if filtro_id_terreno:
+            selected_gdf = load_predio(conexion, option1, filtro_id_terreno)
+            if len(selected_gdf) == 0:
+                st.sidebar.markdown(":gray[*El ID TERRENO no se encontró en la base cartográfica*]")
+                m_streamlit = m.to_streamlit(800, 600)
+                st.markdown(":gray[**Información Alfanumérica**]")
+                select_df = load_table(conexion, option2, filtro_id_terreno)
+                if len(select_df) == 0:
+                    st.markdown(":gray[*El ID TERRENO no se encontró en la base alfanumérica*]")
+                else:
+                    st.data_editor(select_df, key="my_key", num_rows="fixed")
+            else:
+                try:
+                    if int(selected_gdf['COMUNA'][0]) <= 22:
+                        vecinos = load_manzana(conexion, selected_gdf['CONEXION'][0][:-4])
+                    else:
+                        vecinos = load_vecino(conexion, option1, filtro_id_terreno)
+                    m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
+                except:
+                    pass
+                m.add_gdf(selected_gdf, layer_name='Predio seleccionado', zoom_to_layer=True, style={'color':'red', 'fill':'red', 'weight':2})
+                st.sidebar.link_button('Google Maps', f"https://maps.google.com/?q={selected_gdf['LATITUD'][0]},{selected_gdf['LONGITUD'][0]}", type='tertiary', icon=":material/pin_drop:", use_container_width=True)
+                m_streamlit = m.to_streamlit(800, 600)
+                st.markdown(f":gray[**Información Alfanumérica**]")
+                select_df = load_table(conexion, option2, filtro_id_terreno)
+                if len(select_df) == 0:
+                    st.markdown(":gray[*El ID TERRENO no se encontró en la base alfanumérica*]")
                 else:
                     st.data_editor(select_df, key="my_key", num_rows="fixed")
         else:
@@ -251,13 +306,16 @@ elif option == 'NÚMERO PREDIAL':
                 else:
                     st.data_editor(select_df, key="my_key", num_rows="fixed")
             else:
-                if selected_gdf['CONEXION'][0] is None:
-                    vecinos = load_vecino(conexion, option1, filtro_num_pred)
-                elif selected_gdf['CONEXION'][0] is not None and int(selected_gdf['COMUNA'][0]) <= 22:
-                    vecinos = load_manzana(conexion, selected_gdf['CONEXION'][0][:-4])
-                else:
-                    vecinos = load_vecino(conexion, option1, filtro_num_pred)
-                m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
+                try:
+                    if selected_gdf['CONEXION'][0] is None:
+                        vecinos = load_vecino(conexion, option1, filtro_num_pred)
+                    elif selected_gdf['CONEXION'][0] is not None and int(selected_gdf['COMUNA'][0]) <= 22:
+                        vecinos = load_manzana(conexion, selected_gdf['CONEXION'][0][:-4])
+                    else:
+                        vecinos = load_vecino(conexion, option1, filtro_num_pred)
+                    m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
+                except:
+                    pass
                 m.add_gdf(selected_gdf, layer_name='Predio seleccionado', zoom_to_layer=True, style={'color':'red', 'fill':'red', 'weight':2})
                 st.sidebar.link_button('Google Maps', f"https://maps.google.com/?q={selected_gdf['LATITUD'].values[0]},{selected_gdf['LONGITUD'].values[0]}", type='tertiary', icon=":material/pin_drop:", use_container_width=True)
                 m_streamlit = m.to_streamlit(800, 600)
@@ -288,13 +346,16 @@ elif option == 'NPN':
                 else:
                     st.data_editor(select_df, key="my_key", num_rows="fixed")
             else:
-                if selected_gdf['CONEXION'][0] is None:
-                    vecinos = load_vecino(conexion, option, filtro_npn)
-                elif selected_gdf['CONEXION'][0] is not None and int(selected_gdf['COMUNA'][0]) <= 22:
-                    vecinos = load_manzana(conexion, selected_gdf['CONEXION'][0][:-4])
-                else:
-                    vecinos = load_vecino(conexion, option, filtro_npn)
-                m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
+                try:
+                    if selected_gdf['CONEXION'][0] is None:
+                        vecinos = load_vecino(conexion, option, filtro_npn)
+                    elif selected_gdf['CONEXION'][0] is not None and int(selected_gdf['COMUNA'][0]) <= 22:
+                        vecinos = load_manzana(conexion, selected_gdf['CONEXION'][0][:-4])
+                    else:
+                        vecinos = load_vecino(conexion, option, filtro_npn)
+                    m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
+                except:
+                    pass
                 m.add_gdf(selected_gdf, layer_name='Predio seleccionado', zoom_to_layer=True, style={'color':'red', 'fill':'red', 'weight':2})
                 st.sidebar.link_button('Google Maps', f"https://maps.google.com/?q={selected_gdf['LATITUD'].values[0]},{selected_gdf['LONGITUD'].values[0]}", type='tertiary', icon=":material/pin_drop:", use_container_width=True)
                 m_streamlit = m.to_streamlit(800, 600)
@@ -327,18 +388,21 @@ elif option == 'COORDENADAS':
 
             selected_gdf = load_predio_intersect(conexion, latitud, longitud)
             
-            if selected_gdf['CONEXION'][0] is None:
-                vecinos = load_vecino(conexion, option2, int(selected_gdf['IDPREDIO'][0]))
-            elif selected_gdf['CONEXION'][0] is not None and int(selected_gdf['COMUNA'][0]) <= 22:
-                vecinos = load_manzana(conexion, selected_gdf['CONEXION'][0][:-4])
-            else:
-                vecinos = load_vecino(conexion, option2, int(selected_gdf['IDPREDIO'][0]))
-                
+            try:
+                if selected_gdf['CONEXION'][0] is None:
+                    vecinos = load_vecino(conexion, option2, int(selected_gdf['IDPREDIO'][0]))
+                elif selected_gdf['CONEXION'][0] is not None and int(selected_gdf['COMUNA'][0]) <= 22:
+                    vecinos = load_manzana(conexion, selected_gdf['CONEXION'][0][:-4])
+                else:
+                    vecinos = load_vecino(conexion, option2, int(selected_gdf['IDPREDIO'][0]))
+                m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
+            except:
+                pass
+
             try:
                 m.add_marker(location=[latitud, longitud],
                 popup=f"Latitud: {round(latitud,5)}\n Longitud: {round(longitud,5)}",
                 icon=folium.Icon(color="green", icon='screenshot'))
-                m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
                 m.add_gdf(selected_gdf, layer_name='Predio seleccionado', zoom_to_layer=True, style={'color':'red', 'fill':'red', 'weight':2})
                 m_streamlit = m.to_streamlit(800, 600)
                 st.markdown(":gray[**Información Alfanumérica**]")
