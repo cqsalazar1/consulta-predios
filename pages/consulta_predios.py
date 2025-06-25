@@ -74,7 +74,7 @@ def load_table2(_conexion, option, input):
 @st.cache_data
 def load_predio(_conexion, option, input):
     cursor = _conexion.cursor() # Crear un cursor para ejecutar consultas
-    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM terrenos WHERE "{option}" = '{input}' """
+    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM terrenos WHERE "{option}" IN ('{input}') """
 
     cursor.execute(consulta)
 
@@ -127,6 +127,18 @@ def load_vecino(_conexion, option, input):
     gdf = gpd.GeoDataFrame(df, geometry='wkt', crs='4326')
     gdf = gdf.drop(columns=['OBJECTID', 'DEPAPRED', 'MUNIPRED', 'ZONA', 'SECTOR', 'COMUNA', 'BARRIO', 'MANZANA', 'TERRENO', 'CONDICION', 'EDIFPRED', 'PISOPRED', 'PREDIO',
                             'POLITERID', 'ETIQUETA',  'IDTERRENO', 'OBS', 'LAST_EDITE', 'TIPO_AVALU', 'MODIFICACI', 'EDITOR', 'Shape_Leng', 'LATITUD', 'LONGITUD', 'geometry'])
+    return gdf
+
+@st.cache_data
+def load_capa(_conexion, capa):
+    cursor = _conexion.cursor() # Crear un cursor para ejecutar consultas
+    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM {capa} """
+    cursor.execute(consulta)
+    columnas = [col[0] for col in cursor.description]  # Obtener nombres de columnas
+    df = pd.DataFrame(cursor.fetchall(), columns=columnas)
+    df['wkt'] = df['wkt'].apply(wkt.loads)
+    gdf = gpd.GeoDataFrame(df, geometry='wkt', crs='4326')
+    gdf = gdf.drop(columns=['geometry'])
     return gdf
 
 def direccion_parametrizada():
@@ -203,10 +215,14 @@ m.add_child(
 
 conexion = conectar_bd()
 
+m.add_gdf(load_capa(conexion, 'barrios'), layer_name='Barrios', zoom_to_layer=False, style={'color':"#EEB928", 'fill':'white', 'fillOpacity':0.1, 'weight':1.5}, show=False)
+m.add_gdf(load_capa(conexion, 'comunas'), layer_name='Comunas', zoom_to_layer=False, style={'color':"#7C1414", 'fill':'white', 'fillOpacity':0.05, 'weight':2}, show=False)
+m.add_gdf(load_capa(conexion, 'corregimientos'), layer_name='Corregimientos', zoom_to_layer=False, style={'color':"#5F3B13", 'fill':'white', 'fillOpacity':0.1, 'weight':2}, show=False)
+
 ## CONSULTAS
 option = st.sidebar.selectbox(
     "Seleccione el tipo de consulta",
-    ("ID PREDIO", "ID TERRENO", "NÚMERO PREDIAL", "NPN", "COORDENADAS", "DIRECCIÓN"),
+    ("ID PREDIO", "ID TERRENO", "NÚMERO PREDIAL", "NPN", "COORDENADAS", "DIRECCIÓN", "NOMBRE PROPIEDAD"),
 )
 
 if option == 'ID PREDIO':
@@ -486,3 +502,57 @@ elif option == 'DIRECCIÓN':
     except:
         m_streamlit = m.to_streamlit(800, 600)
         st.sidebar.markdown(":gray[*No se encontró ningún predio en la dirección aportada*]")
+
+if option == 'NOMBRE PROPIEDAD':
+    option1 = 'CMINPRED'
+    option2 = 'CONEXION'
+    try:
+        filtro_nom_propiedad = st.sidebar.text_input("NOMBRE PROPIEDAD:", placeholder='Ejemplo: CONJUNTO RESIDENCIAL EL SAMAN')
+        if filtro_nom_propiedad:
+            select_df = load_table2(conexion, option1, filtro_nom_propiedad)
+            num_filas = select_df.shape[0]
+            id_terreno = select_df['ID_TERRENO'].unique().tolist()
+            predios = []
+            for predio in id_terreno:
+                predio = f'{str(predio)}'
+                predios.append(predio)
+            predios = "', '".join(map(str,predios))   #Convertir lista a string separando por coma y agregando comillas simples
+            selected_gdf = load_predio(conexion, option2, predios)
+            num_terrenos = selected_gdf.shape[0]
+
+            if len(selected_gdf) == 0:
+                st.sidebar.markdown(":gray[*La PROPIEDAD no se encontró en la base cartográfica*]")
+                m_streamlit = m.to_streamlit(800, 600)
+            if num_filas == 0:
+                st.markdown(":gray[**Información Alfanumérica**]")
+                st.markdown(":gray[*La PROPIEDAD no se encontró en la base alfanumérica*]")
+            else:
+                if num_terrenos == 1:
+                    try:
+                        if selected_gdf['CONEXION'][0] is None:
+                            vecinos = load_vecino(conexion, option1, filtro_id_predio)
+                        elif selected_gdf['CONEXION'][0] is not None and int(selected_gdf['COMUNA'][0]) <= 22:
+                            vecinos = load_manzana(conexion, selected_gdf['CONEXION'][0][:-4])
+                        else:
+                            vecinos = load_vecino(conexion, option1, filtro_id_predio)
+                        m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
+                    except:
+                        pass
+                    st.sidebar.markdown(f":gray[*Terrenos encontrados: {num_terrenos}*]")
+                    st.sidebar.link_button('Google Maps', f"https://maps.google.com/?q={selected_gdf['LATITUD'].values[0]},{selected_gdf['LONGITUD'].values[0]}", type='tertiary', icon=":material/pin_drop:", use_container_width=True)
+                    m.add_gdf(selected_gdf, layer_name='Predio seleccionado', zoom_to_layer=True, style={'color':'red', 'fill':'red', 'weight':2})
+                    m_streamlit = m.to_streamlit(800, 600)
+                    st.markdown(":gray[**Información Alfanumérica**]")
+                    st.markdown(f":gray[*Registros encontrados: {num_filas}*]")
+                    st.data_editor(select_df, key="my_key", num_rows="fixed")
+                else:
+                    m.add_gdf(selected_gdf, layer_name='Predio seleccionado', zoom_to_layer=True, style={'color':'red', 'fill':'red', 'weight':2})
+                    m_streamlit = m.to_streamlit(800, 600)
+                    st.sidebar.markdown(f":gray[*Terrenos encontrados: {num_terrenos}*]")
+                    st.markdown(":gray[**Información Alfanumérica**]")
+                    st.markdown(f":gray[*Registros encontrados: {num_filas}*]")
+                    st.data_editor(select_df, key="my_key", num_rows="fixed")
+        else:
+            m_streamlit = m.to_streamlit(800, 600)
+    except:
+        m_streamlit = m.to_streamlit(800, 600)
