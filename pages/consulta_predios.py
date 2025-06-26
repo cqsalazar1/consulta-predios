@@ -507,7 +507,7 @@ if option == 'NOMBRE PROPIEDAD':
     option1 = 'CMINPRED'
     option2 = 'CONEXION'
     try:
-        filtro_nom_propiedad = st.sidebar.text_input("NOMBRE PROPIEDAD:", placeholder='Ejemplo: CONJUNTO RESIDENCIAL EL SAMAN')
+        filtro_nom_propiedad = st.sidebar.text_input("NOMBRE PROPIEDAD:", placeholder='Ejemplo: TORRES DE TEQUENDAMA')
         if filtro_nom_propiedad:
             select_df = load_table2(conexion, option1, filtro_nom_propiedad)
             num_filas = select_df.shape[0]
