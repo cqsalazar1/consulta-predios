@@ -195,7 +195,7 @@ def load_zonas(_conexion, id_terreno):
     gdf = gdf[[col for col in gdf.columns if col != 'geometry' and col != 'SHAPE_Leng']]
     return gdf
 
-st.set_page_config(page_title='Consulta de Predios', layout='centered', page_icon="🔍")
+st.set_page_config(page_title='Consulta de Predios', layout='centered', page_icon="🌎")
 
 st.subheader("Consulta Predial", divider='gray')
 
@@ -474,3 +474,4 @@ elif option == 'COORDENADAS':
         except NameError as e:
             st.sidebar.markdown(f":gray[*{e}*]")
             m_streamlit = m.to_streamlit(800, 600)
+
