@@ -339,7 +339,7 @@ m.add_wms_layer(
 ## CONSULTAS
 option = st.sidebar.selectbox(
     "Seleccione el tipo de consulta",
-    ("ID PREDIO", "ID TERRENO", "COORDENADAS", "NOMBRE PROPIEDAD")
+    ("ID PREDIO", "ID TERRENO", "COORDENADAS", "NOMBRE PROPIEDAD", "DIRECCIÓN")
 )
 
 if option == 'ID PREDIO':
@@ -529,3 +529,60 @@ elif option == 'NOMBRE PROPIEDAD':
             m_streamlit = m.to_streamlit(800, 600)
     except:
         m_streamlit = m.to_streamlit(800, 600)
+
+if option == 'DIRECCIÓN':
+    option1 = 'ID_TERRENO'
+    option2 = 'IDPREDIO'
+    direccion = ""
+    try:
+        direccion = direccion_parametrizada()
+        if direccion:
+            API_KEY = st.secrets['GOOGLE_MAPS_API_KEY']
+            
+            resultado = geocode_address(direccion, API_KEY)
+                   
+            latitud = resultado['latitude']
+            longitud = resultado['longitude']
+
+            coordenadas = [(latitud, longitud,5)]
+            df_point = pd.DataFrame([(latitud, longitud)], columns=['Latitud', 'Longitud'])
+            df_point['geometry'] = df_point.apply(lambda row: Point(row['Longitud'], row['Latitud']), axis=1) # Convertir las coordenadas en objetos Point 
+            gdf_point = gpd.GeoDataFrame(df_point, geometry='geometry') # Crear el GeoDataFrame
+            gdf_point.set_crs(epsg=4326, inplace=True) # Establecer el sistema de referencia de coordenadas (CRS)           
+
+            try:
+                selected_gdf = load_predio_intersect(conexion, latitud, longitud)
+                           
+                if selected_gdf['CONEXION'][0] is None:
+                    vecinos = load_vecino(conexion, option2, int(selected_gdf['IDPREDIO'][0]))
+                elif selected_gdf['CONEXION'][0] is not None and int(selected_gdf['COMUNA'][0]) <= 22:
+                    vecinos = load_manzana(conexion, selected_gdf['CONEXION'][0][:-4])
+                else:
+                    vecinos = load_vecino(conexion, option2, int(selected_gdf['IDPREDIO'][0]))
+
+                m.add_marker(location=[latitud, longitud],
+                            popup=f"Latitud: {round(latitud,5)}\n Longitud: {round(longitud,5)}",
+                            icon=folium.Icon(color="green", icon='screenshot'))
+                m.add_gdf(vecinos, layer_name='Predios', zoom_to_layer=False, style={'color':'gray', 'fill':'gray', 'weight':1})
+                m.add_gdf(selected_gdf, layer_name='Predio seleccionado', zoom_to_layer=True, style={'color':'red', 'fill':'red', 'weight':2})
+                m_streamlit = m.to_streamlit(800, 600)
+                st.markdown(":gray[**Información Alfanumérica**]")
+                df_filtrado = load_table(conexion, option1, selected_gdf['CONEXION'][0])
+                if len(df_filtrado) == 0:
+                    st.markdown(":gray[*No se encontró ningún predio en la base alfanumérica*]")
+                else:
+                    st.data_editor(df_filtrado, key="my_key", num_rows="fixed")
+                st.sidebar.link_button('Google Maps', f"https://maps.google.com/?q={latitud},{longitud}", type='tertiary', icon=":material/pin_drop:", use_container_width=True)
+            except:
+                m.add_marker(location=[latitud, longitud],
+                            popup=f"Latitud: {round(latitud,5)}\n Longitud: {round(longitud,5)}",
+                            icon=folium.Icon(color="red", icon='question-sign'))
+                m.set_center(longitud, latitud, zoom=19)
+                
+                m_streamlit = m.to_streamlit(800, 600)
+                st.sidebar.markdown(":gray[*No se encontró ningún predio en la dirección aportada*]")
+        else:
+            m_streamlit = m.to_streamlit(800, 600)
+    except:
+        m_streamlit = m.to_streamlit(800, 600)
+        st.sidebar.markdown(":gray[*No se encontró ningún predio en la dirección aportada*]")
