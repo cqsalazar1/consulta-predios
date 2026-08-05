@@ -76,7 +76,7 @@ def load_table2(_conexion, option, input):
 @st.cache_data
 def load_predio(_conexion, option, input):
     cursor = _conexion.cursor() # Crear un cursor para ejecutar consultas
-    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM terrenos WHERE "{option}" IN ('{input}') """
+    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM terrenos2026 WHERE "{option}" IN ('{input}') """
 
     cursor.execute(consulta)
 
@@ -91,7 +91,7 @@ def load_predio(_conexion, option, input):
 @st.cache_data
 def load_predio_intersect(_conexion, latitud, longitud):
     cursor = _conexion.cursor() # Crear un cursor para ejecutar consultas
-    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM terrenos WHERE ST_Intersects(geometry, 'SRID=4326; POINT({longitud} {latitud})'::geometry) """
+    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM terrenos2026 WHERE ST_Intersects(geometry, 'SRID=4326; POINT({longitud} {latitud})'::geometry) """
         
     cursor.execute(consulta)
 
@@ -106,7 +106,7 @@ def load_predio_intersect(_conexion, latitud, longitud):
 @st.cache_data
 def load_manzana(_conexion, id_manzana):
     cursor = _conexion.cursor() # Crear un cursor para ejecutar consultas
-    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM terrenos WHERE "CONEXION" LIKE '{id_manzana}%' """
+    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM terrenos2026 WHERE "CONEXION" LIKE '{id_manzana}%' """
 
     cursor.execute(consulta)
 
@@ -121,7 +121,7 @@ def load_manzana(_conexion, id_manzana):
 @st.cache_data
 def load_vecino(_conexion, option, input):
     cursor = _conexion.cursor() # Crear un cursor para ejecutar consultas
-    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM terrenos WHERE ST_Touches(geometry, (SELECT geometry FROM terrenos WHERE "{option}" = '{input}' LIMIT 1)) """
+    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM terrenos2026 WHERE ST_Touches(geometry, (SELECT geometry FROM terrenos2026 WHERE "{option}" = '{input}' LIMIT 1)) """
     cursor.execute(consulta)
     
     columnas = [col[0] for col in cursor.description]  # Obtener nombres de columnas
@@ -185,7 +185,7 @@ def geocode_address(address, api_key):
 @st.cache_data
 def load_zonas(_conexion, id_terreno):
     cursor = _conexion.cursor() # Crear un cursor para ejecutar consultas
-    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM zonas_homogeneas WHERE ST_Intersects(geometry, (SELECT geometry FROM terrenos WHERE "CONEXION" = '{id_terreno}' LIMIT 1)) """
+    consulta = f""" SELECT *, ST_AsText(geometry) AS wkt FROM zonas_homogeneas WHERE ST_Intersects(geometry, (SELECT geometry FROM terrenos2026 WHERE "CONEXION" = '{id_terreno}' LIMIT 1)) """
     cursor.execute(consulta)
     
     columnas = [col[0] for col in cursor.description]  # Obtener nombres de columnas
