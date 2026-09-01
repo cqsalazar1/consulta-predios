@@ -199,8 +199,10 @@ st.set_page_config(page_title='Consulta de Predios', layout='centered', page_ico
 
 st.subheader("Consulta Predial", divider='gray')
 
+positron_url = f"https://basemaps.cartocdn.com/light_all/{{z}}/{{x}}/{{y}}.png?key={st.secrets['CARTO_KEY']}"
+
 m = leafmap.Map(
-    tiles='Cartodb Positron',
+    tiles=None,
     #google_map='ROADMAP',
     center=[3.4248559, -76.5188715],
     zoom=12,
@@ -211,6 +213,12 @@ m = leafmap.Map(
     fullscreen_control=False,
     measure_control=False,
     toolbar_control=False
+)
+
+m.add_tile_layer(
+    url=positron_url,
+    name="Mapa Base Claro",
+    attribution="&copy; OpenStreetMap contributors &copy; CARTO",
 )
 
 m.add_child(MeasureControl(position='bottomleft'))
