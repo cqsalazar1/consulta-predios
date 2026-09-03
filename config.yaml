@@ -48,3 +48,14 @@ credentials:
       - admin
       - editor
       - viewer
+    hugo:
+      email: martinez_hugo17@hotmail.com
+      failed_login_attempts: 0
+      first_name: Hugo
+      last_name: Martinez
+      logged_in: false
+      password: $2b$12$pSUa7QQ53qOAz.C/x/tHlOlkbFFOpNjlq2JCVeaZcf4UHNFxuQQze
+      roles:
+      - admin
+      - editor
+      - viewer
